@@ -74,6 +74,40 @@ public class CajasR
     public CajasR() => this.position = new List<Cajas>();
 }
 
+/* ########################## REPISAS ############################# */
+
+
+// Asigna posiciones de las repisas
+
+[Serializable]
+public class Repisas
+{
+    public string repisaId;
+    public float x, y, z;
+
+    public Repisas(string repisaId, float x, float y, float z)
+    {
+        this.repisaId = repisaId;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+}
+
+/*----------------------*/
+
+
+// Crea a las repisas en su posicion respectiva
+
+[Serializable]
+public class RepisaR
+{
+    public List<Repisas> position;
+
+    public RepisaR() => this.position = new List<Repisas>();
+}
+
+
 
 
 /* ########################### CONTROLADOR ############################## */
@@ -103,6 +137,16 @@ public class RobotController : MonoBehaviour
     Dictionary<string, GameObject> cajas;
 
 
+    // Para las repisas
+
+    RepisaR repisaR;
+    Dictionary<string, Vector3> prevPosR, currentPosR; // Actualizar posicion robots
+
+    public GameObject repisaP;
+    Dictionary<string, GameObject> repisa;
+
+
+
 
     public float time = 2.0f; // Tiempo de actualizacion
     private float distance, tiempo; // Para calculos
@@ -128,6 +172,13 @@ public class RobotController : MonoBehaviour
         cajas = new Dictionary<string, GameObject>();
         prevPosC = new Dictionary<string, Vector3>();
         currentPosC = new Dictionary<string, Vector3>();
+
+        // Inicializar repisas
+
+
+        repisaR = new RepisaR();
+        repisa = new Dictionary<string, GameObject>();
+
 
         tiempo = time;
 
