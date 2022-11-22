@@ -1462,7 +1462,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &203613399
 Transform:
   m_ObjectHideFlags: 0
@@ -1490,8 +1490,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b7c94f449e3a8640a09bd4593270498, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  agentPrefab: {fileID: 7356250837933030291, guid: eb82faaedd1cfd14783341a901b8067b, type: 3}
-  obstaclePrefab: {fileID: 8994842379229242230, guid: 3bb28f7148a125e49aca6d914d07eb68, type: 3}
+  wallePrefab: {fileID: 7356250837933030291, guid: eb82faaedd1cfd14783341a901b8067b, type: 3}
+  cajaPrefab: {fileID: 8994842379229242230, guid: 3bb28f7148a125e49aca6d914d07eb68, type: 3}
+  repisaPrefab: {fileID: 4322873784314284093, guid: bc5b7ea4f2be7324494c207c13baf07e, type: 3}
   floor: {fileID: 2130041071}
   NAgents: 5
   width: 10
@@ -8558,7 +8559,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1487050863
 Transform:
   m_ObjectHideFlags: 0
