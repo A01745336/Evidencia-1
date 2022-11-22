@@ -22,7 +22,7 @@ class Walle(mesa.Agent):
         self.carga = False
         self.cajaCargada = None
         self.type = "Robot"
-        self.vecindario = []
+        self.vecindario: list[tuple] = []
 
     def revisarRepisa(self, cell) -> None:
         cellmates = self.model.grid.get_cell_list_contents([cell])
@@ -100,7 +100,6 @@ class Walle(mesa.Agent):
         else:
             nuevaPosicion = self.random.choice(posibleMovimiento)
             self.model.grid.move_agent(self, nuevaPosicion)
-
 
     def step(self) -> None:
         if (self.pos in self.model.cajasLista and self.carga is False):
