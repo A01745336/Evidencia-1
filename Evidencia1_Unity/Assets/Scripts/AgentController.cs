@@ -10,115 +10,135 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 [Serializable]
-public class AgentData
+public class WalleData
 {
     public string id;
     public float x, y, z;
+    public bool box;
 
-    public AgentData(string id, float x, float y, float z)
+    public WalleData(string id, float x, float y, float z, bool box)
     {
         this.id = id;
         this.x = x;
         this.y = y;
         this.z = z;
+        this.box = box;
     }
 }
 
 [Serializable]
 
-public class AgentsData
+public class WalleListData
 {
-    public List<AgentData> positions;
+    public List<WalleData> positions;
 
-    public AgentsData() => this.positions = new List<AgentData>();
+    public WalleListData() => this.positions = new List<WalleData>();
 }
+
+
+[Serializable]
+public class CajasData
+{
+    public string id;
+    public float x, y, z;
+    public bool recoge;
+
+    public CajasData(string id, float x, float y, float z, bool recoge)
+    {
+        this.id = id;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.recoge = recoge;
+    }
+}
+
+[Serializable]
+
+public class CajasListData
+{
+    public List<CajasData> positions;
+
+    public CajasListData() => this.positions = new List<CajasData>();
+}
+
+[Serializable]
+public class RepisaData
+{
+    public string id;
+    public float x, y, z;
+    public int numero;
+
+    public RepisaData(string id, float x, float y, float z, int numero)
+    {
+        this.id = id;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.numero = numero;
+    }
+}
+
+[Serializable]
+
+public class RepisaListData
+{
+    public List<RepisaData> positions;
+
+    public RepisaListData() => this.positions = new List<RepisaData>();
+}
+
+
+
 
 public class AgentController : MonoBehaviour
 {
     // private string url = "https://agents.us-south.cf.appdomain.cloud/";
-    string serverUrl = "http://localhost:8585";
-    string getAgentsEndpoint = "/getAgents";
-    string getObstaclesEndpoint = "/getObstacles";
+    string serverUrl = "http://localhost:8521";
+    string getWalleEndpoint = "/getWalle";
+    string getCajaEndpoint = "/getCaja";
+    string getRepisasEndpoint = "/getRepisas";
     string sendConfigEndpoint = "/init";
     string updateEndpoint = "/update";
-    AgentsData agentsData, obstacleData;
-    Dictionary<string, GameObject> agents;
+    WalleListData walleData;
+    CajasListData cajasData;
+    RepisaListData repisasData;
+    Dictionary<string, GameObject> robots;
+    Dictionary<string, GameObject> caja;
+    Dictionary<string, GameObject> repisa;
     Dictionary<string, Vector3> prevPositions, currPositions;
 
     bool updated = false, started = false;
+    bool iniciaCaja = false, iniciaRepisa = false;
 
-    public GameObject agentPrefab, obstaclePrefab, floor;
-    public int NAgents, width, height;
-    public float timeToUpdate = 5.0f;
+    public GameObject cajasPrefab, wallePrefab, repisasPrefab;
+    public int NCaja, width, height;
+    public float timeToUpdate;
     private float timer, dt;
 
     void Start()
     {
-        agentsData = new AgentsData();
-        obstacleData = new AgentsData();
+        walleData = new WalleListData();
+        cajasData = new CajasListData();
+        repisasData = new RepisaListData();
 
         prevPositions = new Dictionary<string, Vector3>();
         currPositions = new Dictionary<string, Vector3>();
 
-        agents = new Dictionary<string, GameObject>();
+        robots = new Dictionary<string, GameObject>();
+        caja = new Dictionary<string, GameObject>();
+        repisa = new Dictionary<string, GameObject>();
 
-        floor.transform.localScale = new Vector3((float)width/10, 1, (float)height/10);
-        floor.transform.localPosition = new Vector3((float)width/2-0.5f, 0, (float)height/2-0.5f);
-        
         timer = timeToUpdate;
 
         StartCoroutine(SendConfiguration());
-    }
-
-    private void Update() 
-    {
-        if(timer < 0)
-        {
-            timer = timeToUpdate;
-            updated = false;
-            StartCoroutine(UpdateSimulation());
-        }
-
-        if (updated)
-        {
-            timer -= Time.deltaTime;
-            dt = 1.0f - (timer / timeToUpdate);
-
-            foreach(var agent in currPositions)
-            {
-                Vector3 currentPosition = agent.Value;
-                Vector3 previousPosition = prevPositions[agent.Key];
-
-                Vector3 interpolated = Vector3.Lerp(previousPosition, currentPosition, dt);
-                Vector3 direction = currentPosition - interpolated;
-
-                agents[agent.Key].transform.localPosition = interpolated;
-                if(direction != Vector3.zero) agents[agent.Key].transform.rotation = Quaternion.LookRotation(direction);
-            }
-
-            // float t = (timer / timeToUpdate);
-            // dt = t * t * ( 3f - 2f*t);
-        }
-    }
- 
-    IEnumerator UpdateSimulation()
-    {
-        UnityWebRequest www = UnityWebRequest.Get(serverUrl + updateEndpoint);
-        yield return www.SendWebRequest();
- 
-        if (www.result != UnityWebRequest.Result.Success)
-            Debug.Log(www.error);
-        else 
-        {
-            StartCoroutine(GetAgentsData());
-        }
     }
 
     IEnumerator SendConfiguration()
     {
         WWWForm form = new WWWForm();
 
-        form.AddField("NAgents", NAgents.ToString());
+        form.AddField("NCaja", NCaja.ToString());
         form.AddField("width", width.ToString());
         form.AddField("height", height.ToString());
 
@@ -135,37 +155,39 @@ public class AgentController : MonoBehaviour
         {
             Debug.Log("Configuration upload complete!");
             Debug.Log("Getting Agents positions");
-            StartCoroutine(GetAgentsData());
-            StartCoroutine(GetObstacleData());
+            StartCoroutine(GetWalleData());
+            StartCoroutine(GetCajaData());
+            StartCoroutine(GetRepisasData());
         }
     }
 
-    IEnumerator GetAgentsData() 
+
+    IEnumerator GetWalleData() 
     {
-        UnityWebRequest www = UnityWebRequest.Get(serverUrl + getAgentsEndpoint);
+        UnityWebRequest www = UnityWebRequest.Get(serverUrl + getWalleEndpoint);
         yield return www.SendWebRequest();
  
         if (www.result != UnityWebRequest.Result.Success)
             Debug.Log(www.error);
         else 
         {
-            agentsData = JsonUtility.FromJson<AgentsData>(www.downloadHandler.text);
+            walleData = JsonUtility.FromJson<WalleListData>(www.downloadHandler.text);
 
-            foreach(AgentData agent in agentsData.positions)
+            foreach(WalleData walleRobot in walleData.positions)
             {
-                Vector3 newAgentPosition = new Vector3(agent.x, agent.y, agent.z);
+                Vector3 newAgentPosition = new Vector3(walleRobot.x, walleRobot.y, walleRobot.z);
 
                     if(!started)
                     {
-                        prevPositions[agent.id] = newAgentPosition;
-                        agents[agent.id] = Instantiate(agentPrefab, newAgentPosition, Quaternion.identity);
+                        prevPositions[walleRobot.id] = newAgentPosition;
+                        robots[walleRobot.id] = Instantiate(wallePrefab, newAgentPosition, Quaternion.identity);
                     }
                     else
                     {
                         Vector3 currentPosition = new Vector3();
-                        if(currPositions.TryGetValue(agent.id, out currentPosition))
-                            prevPositions[agent.id] = currentPosition;
-                        currPositions[agent.id] = newAgentPosition;
+                        if(currPositions.TryGetValue(walleRobot.id, out currentPosition))
+                            prevPositions[walleRobot.id] = currentPosition;
+                        currPositions[walleRobot.id] = newAgentPosition;
                     }
             }
 
@@ -174,23 +196,109 @@ public class AgentController : MonoBehaviour
         }
     }
 
-    IEnumerator GetObstacleData() 
+    IEnumerator GetCajaData() 
     {
-        UnityWebRequest www = UnityWebRequest.Get(serverUrl + getObstaclesEndpoint);
+        UnityWebRequest www = UnityWebRequest.Get(serverUrl + getCajaEndpoint);
         yield return www.SendWebRequest();
  
         if (www.result != UnityWebRequest.Result.Success)
             Debug.Log(www.error);
         else 
         {
-            obstacleData = JsonUtility.FromJson<AgentsData>(www.downloadHandler.text);
+            cajasData = JsonUtility.FromJson<CajasListData>(www.downloadHandler.text);
 
-            Debug.Log(obstacleData.positions);
+            Debug.Log(cajasData.positions);
 
-            foreach(AgentData obstacle in obstacleData.positions)
+            foreach(CajasData cajaRoja in cajasData.positions)
             {
-                Instantiate(obstaclePrefab, new Vector3(obstacle.x, obstacle.y, obstacle.z), Quaternion.identity);
+                if (!iniciaCaja)
+                {
+                    Vector3 cajaPos = new Vector3(cajaRoja.x, cajaRoja.y, cajaRoja.z);
+                    caja[cajaRoja.id] = Instantiate(cajasPrefab, cajaPos, Quaternion.identity);
+                }
+                else
+                {
+                    if(cajaRoja.recoge){
+                        caja[cajaRoja.id].SetActive(false);
+                    }
+                }
             }
+            if (!iniciaCaja) iniciaCaja = true;
         }
     }
+
+
+    IEnumerator GetRepisasData() 
+    {
+        UnityWebRequest www = UnityWebRequest.Get(serverUrl + getRepisasEndpoint);
+        yield return www.SendWebRequest();
+ 
+        if (www.result != UnityWebRequest.Result.Success)
+            Debug.Log(www.error);
+        else 
+        {
+            repisasData = JsonUtility.FromJson<RepisaListData>(www.downloadHandler.text);
+
+            Debug.Log(repisasData.positions);
+
+            foreach(RepisaData rep in repisasData.positions)
+            {
+                Vector3 repisaPos = new Vector3(rep.x, rep.y, rep.z);
+                repisa[rep.id] = Instantiate(repisasPrefab, new Vector3(rep.x, rep.y, rep.z), Quaternion.identity);
+            }
+
+            if (!iniciaRepisa) iniciaRepisa = true;
+        }
+    }
+
+
+    private void Update() 
+    {
+        if(timer < 0)
+        {
+            timer = timeToUpdate;
+            updated = false;
+            StartCoroutine(UpdateSimulation());
+        }
+
+        if (updated)
+        {
+            timer -= Time.deltaTime;
+            dt = 1.0f - (timer / timeToUpdate);
+
+            foreach(var walle in currPositions)
+            {
+                Vector3 currentPosition = walle.Value;
+                Vector3 previousPosition = prevPositions[walle.Key];
+
+                Vector3 interpolated = Vector3.Lerp(previousPosition, currentPosition, dt);
+                Vector3 direction = currentPosition - interpolated;
+
+                robots[walle.Key].transform.localPosition = interpolated;
+                if(direction != Vector3.zero) robots[walle.Key].transform.rotation = Quaternion.LookRotation(direction);
+            }
+
+            // float t = (timer / timeToUpdate);
+            // dt = t * t * ( 3f - 2f*t);
+        }
+    }
+ 
+    IEnumerator UpdateSimulation()
+    {
+        UnityWebRequest www = UnityWebRequest.Get(serverUrl + updateEndpoint);
+        yield return www.SendWebRequest();
+ 
+        if (www.result != UnityWebRequest.Result.Success)
+            Debug.Log(www.error);
+        else 
+        {
+            StartCoroutine(GetWalleData());
+            StartCoroutine(GetCajaData());
+            StartCoroutine(GetRepisasData());
+        }
+    }
+
+    
+
+    
 }
