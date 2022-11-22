@@ -59,7 +59,7 @@ def getCajas():
         return jsonify({'positions': boxPosition})
 
 
-@app.route('/getPilas', methods=['GET'])
+@app.route('/getRepisas', methods=['GET'])
 def getPilas():
     global randomModel
 
