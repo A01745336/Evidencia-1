@@ -1,62 +1,96 @@
-from AcomodarCajasModel import *
-from mesa.visualization.modules import ChartModule
-from mesa.visualization.modules import CanvasGrid
-from mesa.visualization.ModularVisualization import ModularServer
+from AcomodarCajasModel1 import *
+from flask import Flask, request, jsonify
+import numpy as np
+
+def updatePositionsWalle(flock):
+    positionWalle = []
+    for Walle in flock:
+        Walle.apply_behaviour(flock)
+        Walle.update()
+        Walle.edges()
+        positionWalle.append((Walle.id, Walle.position))
+    return positionWalle
 
 
-def agent_portayal(agent):
-    """
-    It returns a dictionary that describes how the agent should be drawn
+def updatePositionsCaja(flock):
+    positionCaja = []
+    for caja in flock:
+        caja.apply_behaviour(flock)
+        caja.update()
+        caja.edges()
+        positionCaja.append((caja.id, caja.position))
+    return positionCaja
 
-    :param agent: the agent to be portrayed
-    :return: a dictionary with the color, shape, radius and layer of the agent.
-    """
-    portayal = {"Filled": "true"}
+def updatePositionsRepisa(flock):
+    positionRepisa = []
+    for repisa in flock:
+        repisa.apply_behaviour(flock)
+        repisa.update()
+        repisa.edges()
+        positionRepisa.append((repisa.id, repisa.position))
 
-    if (type(agent) == Walle):
-        portayal["Color"] = "green"
-        portayal["Shape"] = "circle"
-        portayal["r"] = 0.5
-        portayal["Layer"] = 2
+    return positionRepisa
 
-    elif (type(agent) == Cajas):
-        portayal["Color"] = "brown"
-        portayal["Shape"] = "circle"
-        portayal["r"] = 0.5
-        portayal["Layer"] = 1
+def positionsWalleToJSON(positions):
+    posDICT = []
+    for id, p in positions:
+        pos = {
+            "walleId" : str(id),
+            "x" : float(p.x),
+            "y" : float(p.z),
+            "z" : float(p.y)
+        }
+        posDICT.append(pos)
+    return jsonify({'positions':posDICT})
 
-    else:
-        portayal["Shape"] = "rect"
-        portayal["Color"] = "blue"
-        portayal["w"] = 1
-        portayal["h"] = 1
-        portayal["Layer"] = 0
+def positionsCajaToJSON(positions):
+    posDICT = []
+    for id, p in positions:
+        pos = {
+            "cajaId" : str(id),
+            "x" : float(p.x),
+            "y" : float(p.z),
+            "z" : float(p.y)
+        }
+        posDICT.append(pos)
+    return jsonify({'positions':posDICT})
 
-    return portayal
+def positionsRepisaToJSON(positions):
+    posDICT = []
+    for id, p in positions:
+        pos = {
+            "repisaId" : str(id),
+            "x" : float(p.x),
+            "y" : float(p.z),
+            "z" : float(p.y)
+        }
+        posDICT.append(pos)
+    return jsonify({'positions':posDICT})
+
+flock = []
+app = Flask("Integradora")
 
 
-grid = CanvasGrid(agent_portayal, 10, 10, 500, 500)
+@app.route('/', methods=['POST', 'GET'])
+def posicionWalle():
+    if request.method == 'GET':
+        positions = updatePositionsWalle(flock)
+        return positionsWalleToJSON(positions)
+    elif request.method == 'POST':
+        return "Post request from Boids example\n"
 
-movimientos = ChartModule(
-    [{
-        "Label": "Movimientos",
-        "Color": "Black"
-    }],
-    data_collector_name='datacollector'
-)
 
-tiempo = ChartModule(
-    [{
-        "Label": "Tiempo",
-        "Color": "Green"
-    }],
-    data_collector_name='datacollector'
-)
+@app.route('/init', methods=['POST', 'GET'])
+def WalleInit():
+    global flock
+    if request.method == 'GET':
+        # Set the number of agents here:
+        flock = [Walle(*np.random.rand(2)*30, 30, 30, id) for id in range(20)]
+        return jsonify({"num_agents":5, "w": 30, "h": 30})
+    elif request.method == 'POST':
+        return "Post request from init\n"
 
-server = ModularServer(AlmacenModel,
-                       [grid, tiempo, movimientos],
-                       "Almacen Model",
-                       {"N": 5, "width": 10, "height": 10, "numCajas": 50,
-                        "time": 580})
-server.port = 8521
-server.launch()
+
+if __name__=='__main__':
+    app.run(host="localhost", port=8521, debug=True)
+
