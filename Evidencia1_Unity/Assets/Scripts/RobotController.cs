@@ -40,6 +40,36 @@ public class WalleMov
 }
 
 
+/* ########################## ROBOTS CON CAJAS ############################# */
+
+
+[Serializable]
+public class WalleConCaja
+{
+    public string walleCId;
+    public float x, y, z;
+
+    public WalleConCaja(string walleCId, float x, float y, float z)
+    {
+        this.walleCId = walleCId;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+}
+
+/*----------------------*/
+
+
+// Crea a los robots en su posicion respectiva
+
+[Serializable]
+public class WalleConCajaMov
+{
+    public List<WalleConCaja> position;
+
+    public WalleConCajaMov() => this.position = new List<WalleConCaja>();
+}
 
 
 /* ############################ CAJAS ############################# */
@@ -119,6 +149,11 @@ public class RobotController : MonoBehaviour
     private string uri = "http://localhost:8521";
 
 
+    string getAgentsEndpoint = "/getAgents";
+    string getObstaclesEndpoint = "/getObstacles";
+    string sendConfigEndpoint = "/init";
+    string updateEndpoint = "/update";
+
     // Para el robot
 
     WalleMov walleMov;
@@ -126,6 +161,15 @@ public class RobotController : MonoBehaviour
 
     public GameObject walleP;
     Dictionary<string, GameObject> walle;
+
+    // Para el robot con caja
+
+    WalleConCajaMov walleConCajaMov;
+    Dictionary<string, Vector3> prevPosCC, currentPosCC; // Actualizar posicion robots
+
+    public GameObject walleConCajaP;
+    Dictionary<string, GameObject> walleConCaja;
+
 
 
     // Para las cajas
@@ -144,7 +188,6 @@ public class RobotController : MonoBehaviour
 
     public GameObject repisaP;
     Dictionary<string, GameObject> repisa;
-
 
 
 
@@ -175,7 +218,6 @@ public class RobotController : MonoBehaviour
 
         // Inicializar repisas
 
-
         repisaR = new RepisaR();
         repisa = new Dictionary<string, GameObject>();
 
@@ -188,7 +230,7 @@ public class RobotController : MonoBehaviour
 
     IEnumerator WalleInicia()
     {
-        using (UnityWebRequest webReq = UnityWebRequest.Get($"{uri}"))
+        using (UnityWebRequest webReq = UnityWebRequest.Get(uri + sendConfigEndpoint))
         {
             Debug.Log("Iniciando conexion ...");
 
@@ -209,7 +251,7 @@ public class RobotController : MonoBehaviour
 
     IEnumerator WalleRecoge()
     {
-        using (UnityWebRequest webReq = UnityWebRequest.Get(uri))
+        using (UnityWebRequest webReq = UnityWebRequest.Get(uri + getAgentsEndpoint))
         {
             yield return webReq.SendWebRequest();
 
@@ -250,7 +292,8 @@ public class RobotController : MonoBehaviour
                 cajasR = JsonUtility.FromJson<CajasR>(webReq.downloadHandler.text);
                 foreach(Cajas caja in cajasR.position)
                 {
-
+                    
+                    Instantiate(cajasP, new Vector3(caja.x, caja.y, caja.z), Quaternion.identity);
                 }
 
                 updated = true;
