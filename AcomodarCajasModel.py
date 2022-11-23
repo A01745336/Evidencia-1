@@ -9,7 +9,6 @@ def movimientos_agentes(model):
 def calc_tiempo(model):
     """
     It returns the current time of the model
-
     :param model: the model object
     :return: The time of the model.
     """
@@ -23,52 +22,90 @@ class Walle(mesa.Agent):
         self.carga = False
         self.cajaCargada = None
         self.type = "Robot"
+        self.vecindario = []
 
     def revisarRepisa(self, cell) -> None:
-        cellmates = self.model.grid.get_cell_list_contents([self.pos])
+        cellmates = self.model.grid.get_cell_list_contents([cell])
         for repisa in cellmates:
             if(repisa.type == "Repisa"):
-                if(repisa.tiddy < 5):
-                    self.dejar()
-                    repisa.tiddy += 1
-                elif(repisa.tiddy == 5):
-                    repisa.empty = False
-                    print("Estoy llena: " + repisa.unique_id + " " +
-                          str(repisa.tiddy))
+                if self.carga is True:
+                    if repisa.tiddy < 5:
+                        repisa.tiddy += 1
+                        self.dejar()
+                    elif repisa.tiddy == 5:
+                        repisa.type = "RepisaLLena"
+                        self.model.repisasLista.remove(repisa.pos)
 
     def dejar(self) -> None:
         self.carga = False
         self.cajaCargada = None
-        self.model.numCajas -= 1
+        self.type = "Robot"
 
     def cargar(self, cell) -> None:
-        self.carga = True
-        caja = self.model.grid.get_cell_list_contents([cell])[0]
-        self.cajaCargada = caja
-        caja.cargada = True
+        cellmates = self.model.grid.get_cell_list_contents([cell])
+        for caja in cellmates:
+            if(caja.type == "Caja"):
+                self.carga = True
+                self.cajaCargada = caja
+                caja.cargada = True
+                self.type = "robotCargando"
         self.model.cajasLista.remove(cell)
+        self.model.numCajas -= 1
 
     def moverCargado(self):
-        posibleMovimiento = self.model.grid.get_neighborhood(
-            self.pos,
-            moore=False,
-            include_center=False)
-        nuevaPosicion = self.random.choice(posibleMovimiento)
-        self.model.grid.move_agent(self, (nuevaPosicion))
-        self.model.grid.move_agent(self.cajaCargada, (nuevaPosicion))
+        x = self.pos[0] - self.model.repisasLista[0][0]
+        y = self.pos[1] - self.model.repisasLista[0][1]
+
+        if x > 0:
+            nuevaPosicion = (self.pos[0] - 1, self.pos[1])
+            self.model.grid.move_agent(self, nuevaPosicion)
+            self.model.grid.move_agent(self.cajaCargada, (nuevaPosicion))
+            self.movimientos += 1
+        elif y > 0:
+            nuevaPosicion = (self.pos[0], self.pos[1] - 1)
+            self.model.grid.move_agent(self, nuevaPosicion)
+            self.model.grid.move_agent(self.cajaCargada, (nuevaPosicion))
+            self.movimientos += 1
+        elif x < 0:
+            nuevaPosicion = (self.pos[0] + 1, self.pos[1])
+            self.model.grid.move_agent(self, nuevaPosicion)
+            self.model.grid.move_agent(self.cajaCargada, (nuevaPosicion))
+            self.movimientos += 1
+        elif y < 0:
+            nuevaPosicion = (self.pos[0], self.pos[1] + 1)
+            self.model.grid.move_agent(self, nuevaPosicion)
+            self.model.grid.move_agent(self.cajaCargada, (nuevaPosicion))
+            self.movimientos += 1
 
     def mover(self) -> None:
+        self.vecindario = []
         self.movimientos += 1
         posibleMovimiento = self.model.grid.get_neighborhood(
             self.pos,
             moore=False,
             include_center=False)
+        for position in posibleMovimiento:
+            casilla = self.model.grid.is_cell_empty(position)
+            if (casilla is False): #and (len(self.model.grid.get_cell_list_contents(position)) == 1)): 
+                for agente in self.model.grid.get_cell_list_contents(position):
+                    if agente.type != "Repisa":
+                        self.vecindario.append(position)
+        if len(self.vecindario) != 0:
+            for pos in self.vecindario:
+                objetosNuevaPos = self.model.grid.get_cell_list_contents([pos])
+                for objeto in objetosNuevaPos:
+                    if objeto.type == "Caja":
+                        self.model.grid.move_agent(self, pos)
+                    else:
+                        nuevaPosicion = self.random.choice(posibleMovimiento)
+                        self.model.grid.move_agent(self, nuevaPosicion)
+        else:
+            nuevaPosicion = self.random.choice(posibleMovimiento)
+            self.model.grid.move_agent(self, nuevaPosicion)
 
-        nuevaPosicion = self.random.choice(posibleMovimiento)
-        self.model.grid.move_agent(self, nuevaPosicion)
 
     def step(self) -> None:
-        if (self.pos in self.model.cajasLista):
+        if (self.pos in self.model.cajasLista and self.carga is False):
             self.cargar(self.pos)
 
         elif(self.pos in self.model.repisasLista):
@@ -78,7 +115,10 @@ class Walle(mesa.Agent):
             self.moverCargado()
 
         else:
-            self.mover()
+            if(self.model.numCajas > 0):
+                self.mover()
+            elif(self.model.numCajas == 0 and self.carga is False):
+                self.model.grid.move_agent(self, self.pos)
 
 
 class Cajas(mesa.Agent):
@@ -97,6 +137,24 @@ class Repisas(mesa.Agent):
         self.type = "Repisa"
         self.movimientos = 0
 
+    def step(self):
+        """
+        Each step, get the number of boxes in its cell position
+        """
+        self.get_number_of_boxes_in_stack()
+
+    def get_number_of_boxes_in_stack(self):
+        """
+        Get the number of boxes in the stack
+        Returns:
+            int: the number of boxes in the stack
+        """
+        cantidad = 0
+        for num in self.model.grid.get_cell_list_contents([self.pos]):
+            if num.type == "Caja":
+                cantidad += 1
+        return cantidad
+
 
 class AlmacenModel(mesa.Model):
     def __init__(self, N, width, height, numCajas, time) -> None:
@@ -104,22 +162,30 @@ class AlmacenModel(mesa.Model):
         self.numAgents = N
         self.grid = mesa.space.MultiGrid(width, height, True)
         self.cells = width * height
-        self.repisasLista = []
-        self.cajasLista = []
+        self.repisasLista: list[tuple] = []
+        self.cajasLista: list[tuple] = []
+        self.walleLista: list[tuple] = []
+        self.cajasNoAcomodadas: list[tuple] = []
         self.numCajas = numCajas
         self.repisa = numCajas // 5
         self.schedule = mesa.time.SimultaneousActivation(self)
         self.time = time
         self.running = True
 
-        print(self.repisa)
-
-        for i in range(self.numAgents):
-            aspiradora = Walle("Robot Cargador " + str(i), self)
+        robots = self.numAgents
+        while(robots > 0):
             x = self.random.randrange(self.grid.width)
             y = self.random.randrange(self.grid.height)
-            self.schedule.add(aspiradora)
-            self.grid.place_agent(aspiradora, (x, y))
+            pos = (x, y)
+
+            if (pos not in self.repisasLista and pos not in
+                self.cajasLista and pos not in
+               self.walleLista):
+                self.walleLista.append(pos)
+                walle = Walle("Robot Cargador " + str(robots), self)
+                self.schedule.add(walle)
+                self.grid.place_agent(walle, (x, y))
+                robots -= 1
 
         bloques = self.numCajas
         while(bloques > 0):
@@ -127,7 +193,9 @@ class AlmacenModel(mesa.Model):
             y = self.random.randrange(self.grid.height)
             temp = (x, y)
 
-            if (temp not in self.cajasLista and temp not in self.repisasLista):
+            if (temp not in self.cajasLista and temp not in
+                self.repisasLista and temp not in
+               self.walleLista):
                 self.cajasLista.append(temp)
                 caja = Cajas("Caja " + str(bloques), self)
                 self.grid.place_agent(caja, (temp))
@@ -139,7 +207,9 @@ class AlmacenModel(mesa.Model):
             y = self.random.randrange(self.grid.height)
             pos = (x, y)
 
-            if (pos not in self.repisasLista and pos not in self.cajasLista):
+            if (pos not in self.repisasLista and pos not in
+                self.cajasLista and pos not in
+               self.walleLista):
                 self.repisasLista.append(pos)
                 estanteria = Repisas("Repisa " + str(self.repisa), self)
                 self.schedule.add(estanteria)
