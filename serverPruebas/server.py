@@ -69,9 +69,9 @@ def getRepisas():
 
 @app.route('/update', methods=['GET'])
 def updateModel():
-    global currentStep, AlmacenModel
+    global currentStep, almacenModel
     if request.method == 'GET':
-        AlmacenModel.step()
+        almacenModel.step()
         currentStep += 1
         return jsonify({'message': f'Model updated to step {currentStep}.',
                         'currentStep': currentStep})
