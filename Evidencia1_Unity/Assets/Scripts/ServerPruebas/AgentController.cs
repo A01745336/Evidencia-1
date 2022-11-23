@@ -62,13 +62,15 @@ public class RepisasData
 {
     public string id;
     public float x, y, z;
+    public int valor;
 
-    public RepisasData(string id, float x, float y, float z)
+    public RepisasData(string id, float x, float y, float z, int valor)
     {
         this.id = id;
         this.x = x;
         this.y = y;
         this.z = z;
+        this.valor = valor;
     }
 }
 
@@ -84,7 +86,7 @@ public class RepisaData
 
 public class AgentController : MonoBehaviour
 {
-    string serverUrl = "http://localhost:8521";
+    string serverUrl = "http://localhost:8585";
     string getWalleEndpoint = "/getWalle";
     string getCajasEndpoint = "/getCajas";
     string getRepisasEndpoint = "/getRepisas";
