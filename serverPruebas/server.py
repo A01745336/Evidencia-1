@@ -36,7 +36,9 @@ def getWalle():
     global almacenModel
 
     if request.method == 'GET':
-        agentPositions = [{"id": str(a.unique_id), "x": x, "y": 0.1, "z": z}
+        agentPositions = [{"id": str(a.unique_id),
+                           "x": x, "y": 0.1, "z": z,
+                           "tieneCaja": a.carga}
                           for (a_, x, z) in almacenModel.grid.coord_iter()
                           for a in a_ if isinstance(a, Walle)]
 

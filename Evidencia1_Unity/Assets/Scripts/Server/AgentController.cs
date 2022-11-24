@@ -220,6 +220,11 @@ public class AgentController : MonoBehaviour
                     }
                     else
                     {
+                        if (agent.tieneCaja){
+                            walles[agent.id].GetComponent<GetChild>().RecojerCaja();
+                        } else {
+                            walles[agent.id].GetComponent<GetChild>().SinCaja();
+                        }
                         Vector3 currentPosition = new Vector3();
                         if(currPositions.TryGetValue(agent.id, out currentPosition))
                             prevPositions[agent.id] = currentPosition;
