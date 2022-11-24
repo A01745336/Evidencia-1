@@ -10,13 +10,15 @@ public class WalleData
 {
     public string id;
     public float x, y, z;
+    public bool tieneCaja;
 
-    public WalleData(string id, float x, float y, float z)
+    public WalleData(string id, float x, float y, float z, bool tieneCaja)
     {
         this.id = id;
         this.x = x;
         this.y = y;
         this.z = z;
+        this.tieneCaja = tieneCaja;
     }
 }
 
@@ -34,13 +36,15 @@ public class CajasData
 {
     public string id;
     public float x, y, z;
+    public bool cajaSostenida;
 
-    public CajasData(string id, float x, float y, float z)
+    public CajasData(string id, float x, float y, float z, bool cajaSostenida)
     {
         this.id = id;
         this.x = x;
         this.y = y;
         this.z = z;
+        this.cajaSostenida = cajaSostenida;
     }
 }
 
@@ -117,7 +121,7 @@ public class AgentController : MonoBehaviour
         repisas = new Dictionary<string, GameObject>();
 
         floor.transform.localScale = new Vector3((float)(width + 1) / 10, 1, (float)(height + 1) / 10);
-        floor.transform.localPosition = new Vector3((float)width/2-0.5f, 0, (float)height/2-0.5f);
+        floor.transform.localPosition = new Vector3((float)width/2-0.5f, 0.1f, (float)height/2-0.5f);
 
         timer = timeToUpdate;
 

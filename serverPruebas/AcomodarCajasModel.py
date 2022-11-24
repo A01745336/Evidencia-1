@@ -218,6 +218,5 @@ class AlmacenModel(mesa.Model):
                              "Tiempo": calc_tiempo})
 
     def step(self) -> None:
-
         self.datacollector.collect(self)
         self.schedule.step()
