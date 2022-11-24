@@ -36,15 +36,15 @@ public class CajasData
 {
     public string id;
     public float x, y, z;
-    public bool cajaSostenida;
+    public bool desatcivarCaja;
 
-    public CajasData(string id, float x, float y, float z, bool cajaSostenida)
+    public CajasData(string id, float x, float y, float z, bool desactivarCaja)
     {
         this.id = id;
         this.x = x;
         this.y = y;
         this.z = z;
-        this.cajaSostenida = cajaSostenida;
+        this.desatcivarCaja = desactivarCaja;
     }
 }
 
@@ -100,7 +100,7 @@ public class AgentController : MonoBehaviour
     Dictionary<string, GameObject> repisas;
     Dictionary<string, Vector3> prevPositions, currPositions;
 
-    bool updated = false, started = false;
+    bool updated = false, started = false, startedCaja = false;
 
     public GameObject wallePrefab, cajaPrefab, repisaPrefab, floor;
     public int NAgents, width, height;
@@ -236,6 +236,46 @@ public class AgentController : MonoBehaviour
             if(!started) started = true;
         }
     }
+
+/*
+    IEnumerator GetCajasData()
+    {
+        UnityWebRequest www = UnityWebRequest.Get(serverUrl + getCajasEndpoint);
+        yield return www.SendWebRequest();
+
+        if (www.result != UnityWebRequest.Result.Success)
+            Debug.Log(www.error);
+        else
+        {
+            cajasData = JsonUtility.FromJson<CajaData>(www.downloadHandler.text);
+
+            foreach(CajasData caja in cajasData.positions)
+            {
+                Vector3 newAgentPosition = new Vector3(caja.x, caja.y, caja.z);
+
+                    if(!startedCaja)
+                    {
+                        prevPositions[caja.id] = newAgentPosition;
+                        cajas[caja.id] = Instantiate(cajaPrefab, newAgentPosition, Quaternion.identity);
+                    }
+                    else
+                    {
+                        if (caja.desatcivarCaja){
+                            cajas[caja.id].SetActive(false);
+                        } else {
+                            cajas[caja.id].SetActive(true);
+                        }
+                        Vector3 currentPosition = new Vector3();
+                        if(currPositions.TryGetValue(caja.id, out currentPosition))
+                            prevPositions[caja.id] = currentPosition;
+                        currPositions[caja.id] = newAgentPosition;
+                    }
+            }
+
+            updated = true;
+            if(!startedCaja) started = true;
+        }
+    }*/
 
     IEnumerator GetCajasData()
     {
