@@ -100,7 +100,7 @@ public class AgentController : MonoBehaviour
     Dictionary<string, GameObject> repisas;
     Dictionary<string, Vector3> prevPositions, currPositions;
 
-    bool updated = false, started = false, startedCaja = false;
+    bool updated = false, started = false, startedCaja = false, updatedCaja = false;
 
     public GameObject wallePrefab, cajaPrefab, repisaPrefab, floor;
     public int NAgents, width, height;
@@ -237,8 +237,8 @@ public class AgentController : MonoBehaviour
         }
     }
 
-/*
-    IEnumerator GetCajasData()
+
+IEnumerator GetCajasData()
     {
         UnityWebRequest www = UnityWebRequest.Get(serverUrl + getCajasEndpoint);
         yield return www.SendWebRequest();
@@ -251,49 +251,21 @@ public class AgentController : MonoBehaviour
 
             foreach(CajasData caja in cajasData.positions)
             {
-                Vector3 newAgentPosition = new Vector3(caja.x, caja.y, caja.z);
-
-                    if(!startedCaja)
-                    {
-                        prevPositions[caja.id] = newAgentPosition;
-                        cajas[caja.id] = Instantiate(cajaPrefab, newAgentPosition, Quaternion.identity);
+                if (!startedCaja)
+                {
+                    Vector3 boxPosition = new Vector3(caja.x, caja.y, caja.z);
+                    cajas[caja.id] = Instantiate(cajaPrefab, new Vector3(caja.x, caja.y, caja.z), Quaternion.identity);
+                }
+                else
+                {
+                    if (caja.desatcivarCaja){
+                        cajas[caja.id].GetComponent<GetChildCaja>().DesactivarCaja();
+                    } else {
+                        cajas[caja.id].GetComponent<GetChildCaja>().ActivarCaja();
                     }
-                    else
-                    {
-                        if (caja.desatcivarCaja){
-                            cajas[caja.id].SetActive(false);
-                        } else {
-                            cajas[caja.id].SetActive(true);
-                        }
-                        Vector3 currentPosition = new Vector3();
-                        if(currPositions.TryGetValue(caja.id, out currentPosition))
-                            prevPositions[caja.id] = currentPosition;
-                        currPositions[caja.id] = newAgentPosition;
-                    }
+                }
             }
-
-            updated = true;
-            if(!startedCaja) started = true;
-        }
-    }*/
-
-    IEnumerator GetCajasData()
-    {
-        UnityWebRequest www = UnityWebRequest.Get(serverUrl + getCajasEndpoint);
-        yield return www.SendWebRequest();
-
-        if (www.result != UnityWebRequest.Result.Success)
-            Debug.Log(www.error);
-        else
-        {
-            cajasData = JsonUtility.FromJson<CajaData>(www.downloadHandler.text);
-
-            Debug.Log(cajasData.positions);
-
-            foreach(CajasData obstacle in cajasData.positions)
-            {
-                Instantiate(cajaPrefab, new Vector3(obstacle.x, obstacle.y, obstacle.z), Quaternion.identity);
-            }
+            if (!startedCaja) startedCaja = true;
         }
     }
     IEnumerator GetRepisasData()

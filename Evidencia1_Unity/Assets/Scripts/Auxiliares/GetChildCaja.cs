@@ -4,20 +4,18 @@ using UnityEngine;
 
 public class GetChildCaja : MonoBehaviour
 {
-    public bool pruebas;
-    public GameObject cajaDesactivarActivar;
-    void Update()
-    {
-        if (pruebas){
-            DesactivarCaja();
-        } else {
-            ActivarCaja();
-        }
+    public GameObject cajaActivar;
+    public GameObject cajaDesactivar;
+    void Start(){
+        cajaActivar= this.gameObject.transform.GetChild(0).gameObject;
+        cajaDesactivar = this.gameObject.transform.GetChild(1).gameObject;
     }
     public void DesactivarCaja(){
-        cajaDesactivarActivar.SetActive(false);
+        cajaActivar.SetActive(false);
+        cajaDesactivar.SetActive(true);
     }
     public void ActivarCaja(){
-        cajaDesactivarActivar.SetActive(true);
+        cajaActivar.SetActive(true);
+        cajaDesactivar.SetActive(false);
     }
 }
