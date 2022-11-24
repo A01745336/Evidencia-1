@@ -36,7 +36,9 @@ def getWalle():
     global almacenModel
 
     if request.method == 'GET':
-        agentPositions = [{"id": str(a.unique_id), "x": x, "y": 0.1, "z": z}
+        agentPositions = [{"id": str(a.unique_id),
+                           "x": x, "y": 0.1, "z": z,
+                           "tieneCaja": a.carga}
                           for (a_, x, z) in almacenModel.grid.coord_iter()
                           for a in a_ if isinstance(a, Walle)]
 
@@ -48,7 +50,9 @@ def getObstacles():
     global almacenModel
 
     if request.method == 'GET':
-        cajaPositions = [{"id": str(a.unique_id), "x": x, "y": 0.1, "z": z}
+        cajaPositions = [{"id": str(a.unique_id),
+                          "x": x, "y": 0.1, "z": z,
+                          "desatcivarCaja": a.cargada}
                          for (a_, x, z) in almacenModel.grid.coord_iter()
                          for a in a_ if isinstance(a, Cajas)]
 
@@ -69,9 +73,9 @@ def getRepisas():
 
 @app.route('/update', methods=['GET'])
 def updateModel():
-    global currentStep, AlmacenModel
+    global currentStep, almacenModel
     if request.method == 'GET':
-        AlmacenModel.step()
+        almacenModel.step()
         currentStep += 1
         return jsonify({'message': f'Model updated to step {currentStep}.',
                         'currentStep': currentStep})

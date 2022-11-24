@@ -177,7 +177,7 @@ class AlmacenModel(mesa.Model):
 
             if (pos not in self.repisasLista and pos not in
                 self.cajasLista and pos not in
-               self.walleLista):
+                self.walleLista):
                 self.walleLista.append(pos)
                 walle = Walle("Robot Cargador " + str(robots), self)
                 self.schedule.add(walle)
@@ -192,7 +192,7 @@ class AlmacenModel(mesa.Model):
 
             if (temp not in self.cajasLista and temp not in
                 self.repisasLista and temp not in
-               self.walleLista):
+                self.walleLista):
                 self.cajasLista.append(temp)
                 caja = Cajas("Caja " + str(bloques), self)
                 self.grid.place_agent(caja, (temp))
@@ -206,7 +206,7 @@ class AlmacenModel(mesa.Model):
 
             if (pos not in self.repisasLista and pos not in
                 self.cajasLista and pos not in
-               self.walleLista):
+                self.walleLista):
                 self.repisasLista.append(pos)
                 estanteria = Repisas("Repisa " + str(self.repisa), self)
                 self.schedule.add(estanteria)
@@ -218,6 +218,5 @@ class AlmacenModel(mesa.Model):
                              "Tiempo": calc_tiempo})
 
     def step(self) -> None:
-
         self.datacollector.collect(self)
         self.schedule.step()

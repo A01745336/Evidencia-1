@@ -1,8 +1,4 @@
-﻿// TC2008B. Sistemas Multiagentes y Gráficas Computacionales
-// C# client to interact with Python. Based on the code provided by Sergio Ruiz.
-// Octavio Navarro. October 2021
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -14,13 +10,15 @@ public class WalleData
 {
     public string id;
     public float x, y, z;
+    public bool tieneCaja;
 
-    public WalleData(string id, float x, float y, float z)
+    public WalleData(string id, float x, float y, float z, bool tieneCaja)
     {
         this.id = id;
         this.x = x;
         this.y = y;
         this.z = z;
+        this.tieneCaja = tieneCaja;
     }
 }
 
@@ -38,13 +36,15 @@ public class CajasData
 {
     public string id;
     public float x, y, z;
+    public bool desatcivarCaja;
 
-    public CajasData(string id, float x, float y, float z)
+    public CajasData(string id, float x, float y, float z, bool desactivarCaja)
     {
         this.id = id;
         this.x = x;
         this.y = y;
         this.z = z;
+        this.desatcivarCaja = desactivarCaja;
     }
 }
 
@@ -100,7 +100,7 @@ public class AgentController : MonoBehaviour
     Dictionary<string, GameObject> repisas;
     Dictionary<string, Vector3> prevPositions, currPositions;
 
-    bool updated = false, started = false;
+    bool updated = false, started = false, startedCaja = false, updatedCaja = false;
 
     public GameObject wallePrefab, cajaPrefab, repisaPrefab, floor;
     public int NAgents, width, height;
@@ -121,7 +121,7 @@ public class AgentController : MonoBehaviour
         repisas = new Dictionary<string, GameObject>();
 
         floor.transform.localScale = new Vector3((float)(width + 1) / 10, 1, (float)(height + 1) / 10);
-        floor.transform.localPosition = new Vector3((float)width/2-0.5f, 0, (float)height/2-0.5f);
+        floor.transform.localPosition = new Vector3((float)width/2-0.5f, 0.1f, (float)height/2-0.5f);
 
         timer = timeToUpdate;
 
@@ -220,6 +220,11 @@ public class AgentController : MonoBehaviour
                     }
                     else
                     {
+                        if (agent.tieneCaja){
+                            walles[agent.id].GetComponent<GetChild>().RecojerCaja();
+                        } else {
+                            walles[agent.id].GetComponent<GetChild>().SinCaja();
+                        }
                         Vector3 currentPosition = new Vector3();
                         if(currPositions.TryGetValue(agent.id, out currentPosition))
                             prevPositions[agent.id] = currentPosition;
@@ -232,7 +237,8 @@ public class AgentController : MonoBehaviour
         }
     }
 
-    IEnumerator GetCajasData()
+
+IEnumerator GetCajasData()
     {
         UnityWebRequest www = UnityWebRequest.Get(serverUrl + getCajasEndpoint);
         yield return www.SendWebRequest();
@@ -243,12 +249,23 @@ public class AgentController : MonoBehaviour
         {
             cajasData = JsonUtility.FromJson<CajaData>(www.downloadHandler.text);
 
-            Debug.Log(cajasData.positions);
-
-            foreach(CajasData obstacle in cajasData.positions)
+            foreach(CajasData caja in cajasData.positions)
             {
-                Instantiate(cajaPrefab, new Vector3(obstacle.x, obstacle.y, obstacle.z), Quaternion.identity);
+                if (!startedCaja)
+                {
+                    Vector3 boxPosition = new Vector3(caja.x, caja.y, caja.z);
+                    cajas[caja.id] = Instantiate(cajaPrefab, new Vector3(caja.x, caja.y, caja.z), Quaternion.identity);
+                }
+                else
+                {
+                    if (caja.desatcivarCaja){
+                        cajas[caja.id].GetComponent<GetChildCaja>().DesactivarCaja();
+                    } else {
+                        cajas[caja.id].GetComponent<GetChildCaja>().ActivarCaja();
+                    }
+                }
             }
+            if (!startedCaja) startedCaja = true;
         }
     }
     IEnumerator GetRepisasData()
